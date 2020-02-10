@@ -102,7 +102,6 @@ int main() {
            std::cout << "h264 packAndSendFromPtr error " << std::endl;
          }
       }
-      std::cout << " completed: " << unsigned(frame->_data->size()) << " " << unsigned(frame->pts) ;
       std::cout << std::endl;
     }
   }
