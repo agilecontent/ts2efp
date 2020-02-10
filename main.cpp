@@ -13,14 +13,36 @@
 ElasticFrameProtocol myEFPSend(MTU, ElasticFrameMode::sender);
 
 void sendData(const std::vector<uint8_t> &subPacket) {
-  std::cout << "Boom!" << std::endl;
+  //EFP Send data
+}
+
+//Here is where you need to add logic for how you want to map TS to EFP
+//In this simple example we map one h264 video and the first AAC audio we find.
+uint16_t videoPID = 0;
+uint16_t audioPID = 0;
+uint8_t efpStreamIDVideo = 0;
+uint8_t efpStreamIDAudio = 0;
+bool mapTStoEFP(PMTHeader &rPMTdata) {
+  bool foundVideo = false;
+  bool foundAudio = false;
+  for (auto &rStream: rPMTdata.infos) {
+    if (rStream->stream_type == 0x1b && !foundVideo) {
+      foundVideo = true;
+      videoPID = rStream -> elementary_PID;
+      efpStreamIDVideo = 10;
+    }
+    if (rStream->stream_type == 0x0f && !foundAudio) {
+      foundAudio = true;
+      audioPID = rStream -> elementary_PID;
+      efpStreamIDAudio= 20;
+    }
+  }
+  if (!foundVideo || !foundAudio) return false;
+return true;
 }
 
 int main() {
   std::cout << "TS-2-EFP Listens at: " << LISTEN_INTERFACE << ":" << unsigned(LISTEN_PORT) << std::endl;
-
-  std::ofstream out_adts("out.adts", std::ios::binary);
-  std::ofstream out_h264("out.h264", std::ios::binary);
 
   myEFPSend.sendCallback = std::bind(&sendData, std::placeholders::_1);
   ElasticFrameMessages efpMessage;
@@ -30,6 +52,7 @@ int main() {
   kissnet::udp_socket serverSocket(kissnet::endpoint(LISTEN_INTERFACE, LISTEN_PORT));
   serverSocket.bind();
   kissnet::buffer<4096> receiveBuffer;
+  bool firstRun = true;
   while (true) {
     auto[received_bytes, status] = serverSocket.recv(receiveBuffer);
     if (!received_bytes || status != kissnet::socket_status::valid ) {
@@ -39,48 +62,49 @@ int main() {
     TsFrame *frame = nullptr;
     demuxer.decode(&in, frame);
     if (frame) {
+
+      if (firstRun && demuxer.pmtIsValid) {
+        if(!mapTStoEFP(demuxer.pmt_header)) {
+          std::cout << "Unable to find a video and a audio in this TS stream" << std::endl;
+          return EXIT_FAILURE;
+        }
+      }
+
+
       std::cout << "GOT: " << unsigned(frame->stream_type);
-      if (frame->stream_type == 0x0f) {
+      if (frame->stream_type == 0x0f && frame->pid == audioPID) {
         std::cout << " AAC Frame";
-       // out_adts.write(frame->_data->data(), frame->_data->size());
         efpMessage = myEFPSend.packAndSendFromPtr((const uint8_t*)frame->_data->data(),
                                                   frame->_data->size(),
                                                   ElasticFrameContent::adts,
                                                   frame->pts,
                                                   frame->pts,
                                                   EFP_CODE('A', 'D', 'T', 'S'),
-                                                  21,
+                                                  efpStreamIDAudio,
                                                   NO_FLAGS
         );
 
         if (efpMessage != ElasticFrameMessages::noError) {
           std::cout << "h264 packAndSendFromPtr error " << std::endl;
         }
-      } else if (frame->stream_type == 0x1b) {
+      } else if (frame->stream_type == 0x1b && frame->pid == videoPID) {
         std::cout << " H.264 frame";
-       // out_h264.write(frame->_data->data(), frame->_data->size());
         efpMessage = myEFPSend.packAndSendFromPtr((const uint8_t*)frame->_data->data(),
             frame->_data->size(),
             ElasticFrameContent::h264,
             frame->pts,
             frame->dts,
             EFP_CODE('A', 'N', 'X', 'B'),
-            20,
+            efpStreamIDVideo,
             NO_FLAGS
             );
-
          if (efpMessage != ElasticFrameMessages::noError) {
            std::cout << "h264 packAndSendFromPtr error " << std::endl;
          }
-
       }
-
       std::cout << " completed: " << unsigned(frame->_data->size()) << " " << unsigned(frame->pts) ;
-
       std::cout << std::endl;
     }
   }
-  out_h264.close();
-  out_adts.close();
   return EXIT_SUCCESS;
 }
