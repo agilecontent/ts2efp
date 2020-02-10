@@ -4,7 +4,7 @@ set -e
 rate=50
 
 #Generate MPEG-TS multiplexed AAC
-ffmpeg \
+ffmpeg -re \
 	-f lavfi -i "smptebars=size=1280x720:rate="$rate \
 	-f lavfi -i sine=frequency=1:beep_factor=1000:sample_rate=48000 \
     -vf drawtext="fontfile=Verdana.ttf:\ timecode='00\:00\:00\:00':rate="$rate":fontsize=64:fontcolor='white':\ boxcolor=0x00000088:box=1:boxborderw=5:x=20:y=400" \
