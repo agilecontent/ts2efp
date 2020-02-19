@@ -10,7 +10,7 @@
 #define LISTEN_INTERFACE "127.0.0.1"
 #define LISTEN_PORT 8080
 
-ElasticFrameProtocol myEFPSend(MTU, ElasticFrameMode::sender);
+ElasticFrameProtocolSender myEFPSend(MTU);
 
 void sendData(const std::vector<uint8_t> &subPacket) {
   //EFP Send data
