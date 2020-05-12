@@ -19,7 +19,7 @@ add_library(mpegts STATIC IMPORTED)
 set_property(TARGET mpegts PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/mpegts/libmpegts.a)
 
 ExternalProject_Add(project_efp
-        GIT_REPOSITORY https://bitbucket.org/unitxtra/efp.git
+        GIT_REPOSITORY https://github.com/Unit-X/efp.git
         GIT_SUBMODULES ""
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/efp
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/efp
