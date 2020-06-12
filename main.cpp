@@ -25,15 +25,15 @@ uint8_t efpStreamIDAudio = 0;
 bool mapTStoEFP(PMTHeader &rPMTdata) {
   bool foundVideo = false;
   bool foundAudio = false;
-  for (auto &rStream: rPMTdata.infos) {
-    if (rStream->stream_type == 0x1b && !foundVideo) {
+  for (auto &rStream: rPMTdata.mInfos) {
+    if (rStream->mStreamType == 0x1b && !foundVideo) {
       foundVideo = true;
-      videoPID = rStream -> elementary_PID;
+      videoPID = rStream -> mElementaryPid;
       efpStreamIDVideo = 10;
     }
-    if (rStream->stream_type == 0x0f && !foundAudio) {
+    if (rStream->mStreamType == 0x0f && !foundAudio) {
       foundAudio = true;
-      audioPID = rStream -> elementary_PID;
+      audioPID = rStream -> mElementaryPid;
       efpStreamIDAudio= 20;
     }
   }
@@ -63,22 +63,22 @@ int main() {
     demuxer.decode(&in, frame);
     if (frame) {
 
-      if (firstRun && demuxer.pmtIsValid) {
-        if(!mapTStoEFP(demuxer.pmt_header)) {
+      if (firstRun && demuxer.mPmtIsValid) {
+        if(!mapTStoEFP(demuxer.mPmtHeader)) {
           std::cout << "Unable to find a video and a audio in this TS stream" << std::endl;
           return EXIT_FAILURE;
         }
       }
 
 
-      std::cout << "GOT: " << unsigned(frame->stream_type);
-      if (frame->stream_type == 0x0f && frame->pid == audioPID) {
+      std::cout << "GOT: " << unsigned(frame->mStreamType);
+      if (frame->mStreamType == 0x0f && frame->mPid == audioPID) {
         std::cout << " AAC Frame";
-        efpMessage = myEFPSend.packAndSendFromPtr((const uint8_t*)frame->_data->data(),
-                                                  frame->_data->size(),
+        efpMessage = myEFPSend.packAndSendFromPtr((const uint8_t*)frame->mData->data(),
+                                                  frame->mData->size(),
                                                   ElasticFrameContent::adts,
-                                                  frame->pts,
-                                                  frame->pts,
+                                                  frame->mPts,
+                                                  frame->mPts,
                                                   EFP_CODE('A', 'D', 'T', 'S'),
                                                   efpStreamIDAudio,
                                                   NO_FLAGS
@@ -87,13 +87,13 @@ int main() {
         if (efpMessage != ElasticFrameMessages::noError) {
           std::cout << "h264 packAndSendFromPtr error " << std::endl;
         }
-      } else if (frame->stream_type == 0x1b && frame->pid == videoPID) {
+      } else if (frame->mStreamType == 0x1b && frame->mPid == videoPID) {
         std::cout << " H.264 frame";
-        efpMessage = myEFPSend.packAndSendFromPtr((const uint8_t*)frame->_data->data(),
-            frame->_data->size(),
+        efpMessage = myEFPSend.packAndSendFromPtr((const uint8_t*)frame->mData->data(),
+            frame->mData->size(),
             ElasticFrameContent::h264,
-            frame->pts,
-            frame->dts,
+            frame->mPts,
+            frame->mPts,
             EFP_CODE('A', 'N', 'X', 'B'),
             efpStreamIDVideo,
             NO_FLAGS
