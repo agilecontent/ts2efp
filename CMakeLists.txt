@@ -7,10 +7,11 @@ include(ExternalProject)
 ExternalProject_Add(project_mpegts
         GIT_REPOSITORY https://github.com/andersc/mpegts
         GIT_SUBMODULES ""
+        UPDATE_COMMAND git pull
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/mpegts
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/mpegts
         GIT_PROGRESS 1
-        BUILD_COMMAND make mpegts
+        BUILD_COMMAND cmake --build ${CMAKE_CURRENT_SOURCE_DIR}/mpegts --config ${CMAKE_BUILD_TYPE} --target mpegts
         STEP_TARGETS build
         EXCLUDE_FROM_ALL TRUE
         INSTALL_COMMAND ""
@@ -24,7 +25,7 @@ ExternalProject_Add(project_efp
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/efp
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/efp
         GIT_PROGRESS 1
-        BUILD_COMMAND make efp
+        BUILD_COMMAND cmake --build ${CMAKE_CURRENT_SOURCE_DIR}/efp --config ${CMAKE_BUILD_TYPE} --target efp
         STEP_TARGETS build
         EXCLUDE_FROM_ALL TRUE
         INSTALL_COMMAND ""
@@ -35,7 +36,12 @@ set_property(TARGET efp PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/e
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/mpegts/mpegts/)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/efp/)
 
-add_executable(ts2efp main.cpp)
+add_executable(ts2efp ts2efp.cpp)
 add_dependencies(ts2efp project_mpegts)
 add_dependencies(ts2efp project_efp)
 target_link_libraries(ts2efp efp mpegts)
+
+add_executable(efp2ts efp2ts.cpp)
+add_dependencies(efp2ts project_mpegts)
+add_dependencies(efp2ts project_efp)
+target_link_libraries(efp2ts efp mpegts)
