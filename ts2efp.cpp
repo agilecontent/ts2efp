@@ -1,8 +1,6 @@
 #include <iostream>
 #include "kissnet/kissnet.hpp"
 #include "mpegts_demuxer.h"
-#include "simple_buffer.h"
-#include "ts_packet.h"
 #include "ElasticFrameProtocol.h"
 
 #define MTU 1456 //SRT-max

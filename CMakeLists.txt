@@ -4,7 +4,6 @@ project(ts2efp)
 set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
-variable_watch(CMAKE_BUILD_TYPE)
 
 include(ExternalProject)
 ExternalProject_Add(project_mpegts
