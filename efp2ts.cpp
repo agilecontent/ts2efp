@@ -5,7 +5,6 @@
 #include <iostream>
 #include "kissnet/kissnet.hpp"
 #include "mpegts_muxer.h"
-#include "simple_buffer.h"
 #include "ts_packet.h"
 #include "ElasticFrameProtocol.h"
 
@@ -62,7 +61,7 @@ void gotData(ElasticFrameProtocolReceiver::pFramePtr &rPacket) {
     for (int lI = 0 ; lI < packets ; lI++) {
         mpegTsOut.send((const std::byte *)lpData+(lI*188), 188);
     }
-    tsOutBuffer.erase(tsOutBuffer.size());
+    tsOutBuffer.clear();
 }
 
 int main() {

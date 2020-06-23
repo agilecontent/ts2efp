@@ -3,6 +3,9 @@ project(ts2efp)
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
+variable_watch(CMAKE_BUILD_TYPE)
+
 include(ExternalProject)
 ExternalProject_Add(project_mpegts
         GIT_REPOSITORY https://github.com/andersc/mpegts
@@ -11,6 +14,7 @@ ExternalProject_Add(project_mpegts
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/mpegts
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/mpegts
         GIT_PROGRESS 1
+        CONFIGURE_COMMAND cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ${CMAKE_CURRENT_SOURCE_DIR}/mpegts
         BUILD_COMMAND cmake --build ${CMAKE_CURRENT_SOURCE_DIR}/mpegts --config ${CMAKE_BUILD_TYPE} --target mpegts
         STEP_TARGETS build
         EXCLUDE_FROM_ALL TRUE
@@ -25,6 +29,7 @@ ExternalProject_Add(project_efp
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/efp
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/efp
         GIT_PROGRESS 1
+        CONFIGURE_COMMAND cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ${CMAKE_CURRENT_SOURCE_DIR}/efp
         BUILD_COMMAND cmake --build ${CMAKE_CURRENT_SOURCE_DIR}/efp --config ${CMAKE_BUILD_TYPE} --target efp
         STEP_TARGETS build
         EXCLUDE_FROM_ALL TRUE
@@ -33,6 +38,7 @@ ExternalProject_Add(project_efp
 add_library(efp STATIC IMPORTED)
 set_property(TARGET efp PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/efp/libefp.a)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/mpegts/amf0/amf0/)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/mpegts/mpegts/)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/efp/)
 
