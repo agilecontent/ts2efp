@@ -21,46 +21,46 @@
 
 kissnet::udp_socket mpegTsOut(kissnet::endpoint(TARGET_INTERFACE, TARGET_PORT));
 ElasticFrameProtocolReceiver myEFPReciever(10,4);
-MpegTsMuxer muxer;
+MpegTsMuxer *muxer;
 std::map<uint8_t, int> streamPidMap;
-SimpleBuffer tsOutBuffer;
-TsFrame tsFrame;
+
 
 void gotData(ElasticFrameProtocolReceiver::pFramePtr &rPacket) {
+    EsFrame esFrame;
     if (rPacket->mDataContent == ElasticFrameContent::h264) {
-        tsFrame.mData = std::make_shared<SimpleBuffer>();
-        tsFrame.mData->append((const char *) rPacket->pFrameData, rPacket->mFrameSize);
-        tsFrame.mPts = rPacket->mPts;
-        tsFrame.mDts = rPacket->mDts;
-        tsFrame.mPcr = 0;
-        tsFrame.mStreamType = TYPE_VIDEO;
-        tsFrame.mStreamId = 224;
-        tsFrame.mPid = VIDEO_PID;
-        tsFrame.mExpectedPesPacketLength = 0;
-        tsFrame.mCompleted = true;
-        muxer.encode(&tsFrame, streamPidMap, PMT_PID, &tsOutBuffer);
+        esFrame.mData = std::make_shared<SimpleBuffer>();
+        esFrame.mData->append(rPacket->pFrameData, rPacket->mFrameSize);
+        esFrame.mPts = rPacket->mPts;
+        esFrame.mDts = rPacket->mDts;
+        esFrame.mPcr = rPacket->mDts;
+        esFrame.mStreamType = TYPE_VIDEO;
+        esFrame.mStreamId = 224;
+        esFrame.mPid = VIDEO_PID;
+        esFrame.mExpectedPesPacketLength = 0;
+        esFrame.mCompleted = true;
+        muxer->encode(esFrame);
     } else if (rPacket->mDataContent == ElasticFrameContent::adts) {
-        tsFrame.mData = std::make_shared<SimpleBuffer>();
-        tsFrame.mData->append((const char *) rPacket->pFrameData, rPacket->mFrameSize);
-        tsFrame.mPts = rPacket->mPts;
-        tsFrame.mDts = rPacket->mPts;
-        tsFrame.mPcr = 0;
-        tsFrame.mStreamType = TYPE_AUDIO;
-        tsFrame.mStreamId = 192;
-        tsFrame.mPid = AUDIO_PID;
-        tsFrame.mExpectedPesPacketLength = 0;
-        tsFrame.mCompleted = true;
-        muxer.encode(&tsFrame, streamPidMap, PMT_PID, &tsOutBuffer);
+        esFrame.mData = std::make_shared<SimpleBuffer>();
+        esFrame.mData->append(rPacket->pFrameData, rPacket->mFrameSize);
+        esFrame.mPts = rPacket->mPts;
+        esFrame.mDts = rPacket->mPts;
+        esFrame.mPcr = 0;
+        esFrame.mStreamType = TYPE_AUDIO;
+        esFrame.mStreamId = 192;
+        esFrame.mPid = AUDIO_PID;
+        esFrame.mExpectedPesPacketLength = 0;
+        esFrame.mCompleted = true;
+        muxer->encode(esFrame);
     }
+}
 
-    //Double to fail at non integer data and be able to visualize in the print-out
-    double packets = (double)tsOutBuffer.size() / 188.0;
+void muxOutput(SimpleBuffer &rTsOutBuffer) {
+    double packets = (double)rTsOutBuffer.size() / 188.0;
     std::cout << "Sending -> " << packets << " MPEG-TS packets" << std::endl;
-    char* lpData = tsOutBuffer.data();
+    uint8_t* lpData = rTsOutBuffer.data();
     for (int lI = 0 ; lI < packets ; lI++) {
         mpegTsOut.send((const std::byte *)lpData+(lI*188), 188);
     }
-    tsOutBuffer.clear();
 }
 
 int main() {
@@ -69,6 +69,8 @@ int main() {
     //Set the pids. In this example hardcoded. EFPSignal should be used here for dynamic flows.
     streamPidMap[TYPE_AUDIO] = AUDIO_PID;
     streamPidMap[TYPE_VIDEO] = VIDEO_PID;
+    muxer = new MpegTsMuxer(streamPidMap, PMT_PID, VIDEO_PID);
+    muxer->tsOutCallback = std::bind(&muxOutput, std::placeholders::_1);
 
     myEFPReciever.receiveCallback = std::bind(gotData, std::placeholders::_1);
     ElasticFrameMessages efpMessage;
@@ -86,5 +88,6 @@ int main() {
             std::cout << "EFP error: " << (int16_t)efpMessage << std::endl;
         }
     }
+    delete muxer;
     return EXIT_SUCCESS;
 }

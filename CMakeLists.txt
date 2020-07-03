@@ -7,7 +7,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 
 include(ExternalProject)
 ExternalProject_Add(project_mpegts
-        GIT_REPOSITORY https://github.com/andersc/mpegts
+        GIT_REPOSITORY https://github.com/Unit-X/mpegts.git
         GIT_SUBMODULES ""
         UPDATE_COMMAND git pull
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/mpegts
