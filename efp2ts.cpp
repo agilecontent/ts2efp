@@ -20,7 +20,7 @@
 #define PMT_PID 100
 
 kissnet::udp_socket mpegTsOut(kissnet::endpoint(TARGET_INTERFACE, TARGET_PORT));
-ElasticFrameProtocolReceiver myEFPReciever(10,4);
+ElasticFrameProtocolReceiver myEFPReciever(100,40);
 MpegTsMuxer *muxer;
 std::map<uint8_t, int> streamPidMap;
 
@@ -69,7 +69,7 @@ int main() {
     //Set the pids. In this example hardcoded. EFPSignal should be used here for dynamic flows.
     streamPidMap[TYPE_AUDIO] = AUDIO_PID;
     streamPidMap[TYPE_VIDEO] = VIDEO_PID;
-    muxer = new MpegTsMuxer(streamPidMap, PMT_PID, VIDEO_PID);
+    muxer = new MpegTsMuxer(streamPidMap, PMT_PID, VIDEO_PID, MpegTsMuxer::MuxType::h222Type);
     muxer->tsOutCallback = std::bind(&muxOutput, std::placeholders::_1);
 
     myEFPReciever.receiveCallback = std::bind(gotData, std::placeholders::_1);
