@@ -5,7 +5,7 @@ This example uses EFP ([ElasticFramingProtocol](https://github.com/Unit-X/efp))
 
 [Kissnet](https://github.com/Ybalrid/kissnet) for sending/recieving UDP packets
 
-and [Akanchis TS-Demuxer](https://github.com/andersc/mpegts) for muxing/demuxing MPEG-TS
+and a patched [Akanchis TS-Demuxer](https://github.com/unit-x/mpegts) for muxing/demuxing MPEG-TS.
 
 ## Description
 
@@ -46,7 +46,4 @@ cmake --build . --config Debug
 
 *MIT*
 
-Read *LICENCE.md* for details
-
-
- 
+Read *LICENSE.md* for details
